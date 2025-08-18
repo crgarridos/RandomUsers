@@ -15,6 +15,7 @@ class UserRemoteDataSourceImpl @Inject constructor(
         page: Int,
         results: Int,
     ): List<User> {
-        TODO()
+        val remoteUsers = apiService.getUsers(results = results, page = page)
+        return remoteUsers.results.toDomainUserList()
     }
 }
