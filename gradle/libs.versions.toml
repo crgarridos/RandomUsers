@@ -14,6 +14,7 @@ moshiKotlinCodegen = "1.15.2"
 retrofitCorconverterMoshi = "3.0.0"
 retrofit = "3.0.0"
 hilt = "2.57"
+roomRuntime = "2.7.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -36,6 +37,9 @@ retrofit = {group = "com.squareup.retrofit2", name = "retrofit", version.ref = "
 retrofitCorconverterMoshi = {group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofitCorconverterMoshi" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
