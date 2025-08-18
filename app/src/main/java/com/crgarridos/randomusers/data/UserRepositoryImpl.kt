@@ -12,7 +12,6 @@ import com.crgarridos.randomusers.domain.model.util.toDomainSuccess
 import com.crgarridos.randomusers.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject

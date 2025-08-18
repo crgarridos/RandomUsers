@@ -25,7 +25,6 @@ fun List<User>.toLocalUserList(): List<LocalUser> {
 
 fun LocalUser.toDomainUser(): User {
     return User(
-        id = this.email,
         title = this.name?.title ?: "",
         firstName = this.name?.first ?: "",
         lastName = this.name?.last ?: "",
