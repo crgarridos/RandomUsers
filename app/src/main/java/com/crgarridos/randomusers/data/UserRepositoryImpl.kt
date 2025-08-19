@@ -2,18 +2,16 @@ package com.crgarridos.randomusers.data
 
 import com.crgarridos.randomusers.data.local.UserLocalDataSource
 import com.crgarridos.randomusers.data.remote.UserRemoteDataSource
+import com.crgarridos.randomusers.domain.model.PaginatedUserList
 import com.crgarridos.randomusers.domain.model.User
 import com.crgarridos.randomusers.domain.model.UserError
 import com.crgarridos.randomusers.domain.model.UserNotFound
 import com.crgarridos.randomusers.domain.model.util.DomainResult
 import com.crgarridos.randomusers.domain.model.util.DomainSuccess
 import com.crgarridos.randomusers.domain.model.util.NetworkError
-import com.crgarridos.randomusers.domain.model.util.toDomainSuccess
 import com.crgarridos.randomusers.domain.repository.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import retrofit2.HttpException
-import java.io.IOException
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
@@ -22,21 +20,21 @@ class UserRepositoryImpl @Inject constructor(
 ) : UserRepository {
 
     override suspend fun fetchUsersPage(
-        page: Int,
-        results: Int,
-    ): DomainResult<UserError, List<User>> {
-        try {
-            val users = remoteDataSource.getUsers(results = results, page = page)
-            if (page == 1) {
+        pageNumber: Int,
+        resultsPerPage: Int,
+    ): DomainResult<UserError, PaginatedUserList> {
+        val result = remoteDataSource.getUserPage(
+            resultsPerPage = resultsPerPage,
+            pageNumber = pageNumber
+        )
+        if (result is DomainSuccess) {
+            if (pageNumber == 1) {
                 userLocalDataSource.deleteAll()
             }
-            userLocalDataSource.insertOrReplace(users)
-            return users.toDomainSuccess()
-        } catch (_: HttpException) {
-            return NetworkError.ServerError
-        } catch (_: IOException) {
-            return NetworkError.ConnectivityError
+            userLocalDataSource.insertOrReplace(result.data.users)
         }
+
+        return result
     }
 
     override fun getObservableUsers(): Flow<List<User>> {
