@@ -1,5 +1,7 @@
 package com.crgarridos.randomusers.domain.model
 
+import com.crgarridos.randomusers.domain.model.util.DomainError
+
 data class User(
     val title: String,
     val firstName: String,
@@ -11,4 +13,5 @@ data class User(
     val nationality: String?
 )
 
-open class UserError(message: String)
+open class UserError(message: String): DomainError<Nothing>
+object UserNotFound : UserError("User not found") // TODO clean
