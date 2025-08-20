@@ -27,10 +27,12 @@ class UserRemoteDataSourceImpl @Inject constructor(
                 results = resultsPerPage,
                 page = pageNumber
             )
+            val nextPage = remoteUsers.info.page
+                .let { if (it > 0) it + 1 else it }
 
             return PaginatedUserList(
                 users = remoteUsers.results.toDomainUserList(),
-                nextPage = remoteUsers.info.page
+                nextPage = nextPage
             ).toDomainSuccess()
         } catch (_: HttpException) {
             return NetworkError.ServerError
