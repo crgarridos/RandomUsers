@@ -28,10 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +46,6 @@ import com.crgarridos.randomusers.ui.compose.common.FullScreenLoading
 import com.crgarridos.randomusers.ui.compose.common.FullScreenStatusWithRetry
 import com.crgarridos.randomusers.ui.compose.model.UiUser
 import com.crgarridos.randomusers.ui.compose.theme.RandomUsersTheme
-import kotlinx.coroutines.flow.distinctUntilChanged
 
 private const val ITEMS_COUNT_THRESHOLD = 5
 
@@ -139,38 +134,24 @@ private fun ListScreenContent(
         }
     }
 
-    var hasPendingLoadRequestFromScroll by remember { mutableStateOf(false) }
-
-    LaunchedEffect(uiState.isLoadingMore) {
-        if (!uiState.isLoadingMore && hasPendingLoadRequestFromScroll) {
-            hasPendingLoadRequestFromScroll = false
-        }
-    }
-
-    LaunchedEffect(listState, uiState.users, uiState.canLoadMore, hasPendingLoadRequestFromScroll) {
-
-        if (hasPendingLoadRequestFromScroll)
-            return@LaunchedEffect
-
-        if (!uiState.canLoadMore)
-            return@LaunchedEffect
-
+    val currentUsers = uiState.users
+    LaunchedEffect(
+        listState,
+        currentUsers,
+        uiState.canLoadMore,
+        uiState.isLoadingMore
+    ) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo }
-            .distinctUntilChanged()
             .collect { visibleItems ->
                 if (visibleItems.isNotEmpty() && !uiState.isLoadingMore && uiState.canLoadMore) {
-                    if (!hasPendingLoadRequestFromScroll) {
-                        val lastVisibleItemIndex = visibleItems.last().index
-                        if (lastVisibleItemIndex >= uiState.users.size - ITEMS_COUNT_THRESHOLD) {
-                            hasPendingLoadRequestFromScroll = true
-                            onLoadMoreRequested()
-                        }
+                    val lastVisibleItemIndex = visibleItems.last().index
+                    if (lastVisibleItemIndex >= currentUsers.size - ITEMS_COUNT_THRESHOLD) {
+                        onLoadMoreRequested()
                     }
                 }
             }
     }
 }
-
 
 @Composable
 private fun UserListItem(
@@ -294,3 +275,4 @@ internal val previewUserList = List(20) { index ->
         gender = if (index % 2 == 0) "male" else "female"
     )
 }
+
