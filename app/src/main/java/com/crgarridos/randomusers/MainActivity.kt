@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
                         // Example: navController.navigate("user_detail/$userId")
                     },
                     onLoadMoreRequested = viewModel::loadMoreUsers,
-                    onRetry = {}, // TODO retry
+                    onRefresh = viewModel::refresh,
                     onClearLoadMoreError = viewModel::clearLoadMoreErrorMessage
                 )
             }

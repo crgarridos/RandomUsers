@@ -30,6 +30,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -62,6 +63,7 @@ sealed class UserListUiState {
         val canLoadMore: Boolean,
         val isLoadingMore: Boolean,
         val loadMoreErrorMessage: String? = null,
+        val isRefreshing: Boolean = false,
     ) : UserListUiState()
 
     data class Error(val message: String) : UserListUiState()
@@ -73,7 +75,7 @@ fun UserListScreen(
     uiState: UserListUiState,
     onUserClick: (userId: String) -> Unit,
     onLoadMoreRequested: () -> Unit,
-    onRetry: () -> Unit = {},
+    onRefresh: () -> Unit = {},
     onClearLoadMoreError: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -113,7 +115,7 @@ fun UserListScreen(
             is UserListUiState.Loading -> FullScreenLoading()
             is UserListUiState.Error -> ErrorScreen(
                 message = uiState.message,
-                onRetry = onRetry,
+                onRetry = onRefresh,
                 modifier = Modifier.padding(paddingValues)
             )
 
@@ -121,66 +123,74 @@ fun UserListScreen(
                 uiState = uiState,
                 onUserClick = onUserClick,
                 onLoadMoreRequested = onLoadMoreRequested,
+                onRefresh = onRefresh,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
             )
 
             UserListUiState.Empty -> EmptyScreen(
-                onRetry = onRetry,
+                onRetry = onRefresh,
                 modifier = Modifier.padding(paddingValues),
             )
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ListScreenContent(
     modifier: Modifier = Modifier,
     uiState: UserListUiState.Success,
     onUserClick: (userId: String) -> Unit,
     onLoadMoreRequested: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
-    val listState = rememberLazyListState()
-    LazyColumn(
-        state = listState,
-        modifier = modifier.padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp)
+    PullToRefreshBox(
+        isRefreshing = uiState.isRefreshing,
+        onRefresh = onRefresh,
+        modifier = modifier.padding(horizontal = 16.dp)
     ) {
-        itemsIndexed(uiState.users, key = { _, user -> user.id }) { _, user ->
-            UserListItem(user = user, onClick = { onUserClick(user.id) })
-        }
-
-        if (uiState.isLoadingMore) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+        val listState = rememberLazyListState()
+        LazyColumn(
+            state = listState,
+            contentPadding = PaddingValues(vertical = 16.dp)
+        ) {
+            itemsIndexed(uiState.users, key = { _, user -> user.id }) { _, user ->
+                UserListItem(user = user, onClick = { onUserClick(user.id) })
             }
-        }
-    }
 
-    val currentUsers = uiState.users
-    LaunchedEffect(
-        listState,
-        currentUsers,
-        uiState.canLoadMore,
-        uiState.isLoadingMore
-    ) {
-        snapshotFlow { listState.layoutInfo.visibleItemsInfo }
-            .collect { visibleItems ->
-                if (visibleItems.isNotEmpty() && !uiState.isLoadingMore && uiState.canLoadMore) {
-                    val lastVisibleItemIndex = visibleItems.last().index
-                    if (lastVisibleItemIndex >= currentUsers.size - ITEMS_COUNT_THRESHOLD) {
-                        onLoadMoreRequested()
+            if (uiState.isLoadingMore) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
             }
+        }
+
+        val currentUsers = uiState.users
+        LaunchedEffect(
+            listState,
+            currentUsers,
+            uiState.canLoadMore,
+            uiState.isLoadingMore
+        ) {
+            snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+                .collect { visibleItems ->
+                    if (visibleItems.isNotEmpty() && !uiState.isLoadingMore && uiState.canLoadMore) {
+                        val lastVisibleItemIndex = visibleItems.last().index
+                        if (lastVisibleItemIndex >= currentUsers.size - ITEMS_COUNT_THRESHOLD) {
+                            onLoadMoreRequested()
+                        }
+                    }
+                }
+        }
     }
 }
 
@@ -231,6 +241,7 @@ private fun UserListItem(
         }
     }
 }
+
 @Composable
 private fun EmptyScreen(modifier: Modifier, onRetry: () -> Unit) {
     FullScreenStatusWithRetry(
@@ -241,6 +252,7 @@ private fun EmptyScreen(modifier: Modifier, onRetry: () -> Unit) {
         modifier = modifier
     )
 }
+
 @Composable
 @Preview(showBackground = true)
 fun UserListScreenPreview_Success() {
@@ -253,7 +265,6 @@ fun UserListScreenPreview_Success() {
             ),
             onUserClick = {},
             onLoadMoreRequested = {},
-            onRetry = {}
         )
     }
 }
@@ -266,7 +277,6 @@ private fun UserListScreenPreview_Loading() {
             uiState = UserListUiState.Loading,
             onUserClick = {},
             onLoadMoreRequested = {},
-            onRetry = {}
         )
     }
 }
@@ -279,7 +289,6 @@ private fun UserListScreenPreview_Error() {
             uiState = UserListUiState.Error("Failed to load users."),
             onUserClick = {},
             onLoadMoreRequested = {},
-            onRetry = {}
         )
     }
 }

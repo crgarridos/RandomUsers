@@ -14,6 +14,7 @@ import com.crgarridos.randomusers.domain.usecase.ObserveAllUsersUseCase
 import com.crgarridos.randomusers.ui.compose.userlist.UserListUiState
 import com.crgarridos.randomusers.ui.presentation.mapper.toUiUserList
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +39,7 @@ class UserListViewModel @Inject constructor(
     ) {
         object InitialLoading : PaginationState(nextPageToLoad = 1)
         data class IsLoadingMore(override val nextPageToLoad: Int) : PaginationState(nextPageToLoad)
+        object IsRefreshing : PaginationState(nextPageToLoad = 1)
         data class Idle(
             val canLoadMore: Boolean,
             override val nextPageToLoad: Int,
@@ -87,6 +89,14 @@ class UserListViewModel @Inject constructor(
                 loadMoreErrorMessage = state.loadMoreErrorMessage
             )
 
+            is PaginationState.IsRefreshing -> UserListUiState.Success(
+                users = users.toUiUserList(),
+                canLoadMore = false,
+                isLoadingMore = false,
+                isRefreshing = true,
+                loadMoreErrorMessage = state.loadMoreErrorMessage
+            )
+
             is PaginationState.Idle -> UserListUiState.Success(
                 users = users.toUiUserList(),
                 canLoadMore = state.canLoadMore,
@@ -105,6 +115,10 @@ class UserListViewModel @Inject constructor(
         fetchUsers()
     }
 
+    fun refresh() {
+        fetchUsers(refresh = true)
+    }
+
     fun clearLoadMoreErrorMessage() {
         paginationState.update { currentState ->
             if (currentState is PaginationState.Idle && currentState.loadMoreErrorMessage != null) {
@@ -115,23 +129,35 @@ class UserListViewModel @Inject constructor(
         }
     }
 
-    private fun fetchUsers() = viewModelScope.launch {
+    private fun fetchUsers(refresh: Boolean = false) = viewModelScope.launch {
 
         val lastPaginationState = paginationState.value
+        val nextPageToLoad = if (refresh) 1 else lastPaginationState.nextPageToLoad
 
         paginationState.value = when (lastPaginationState) {
             is PaginationState.IsLoadingMore -> return@launch
+            is PaginationState.IsRefreshing -> return@launch
 
             is PaginationState.InitialLoading,
             is PaginationState.Error,
             is PaginationState.Idle,
-                -> PaginationState.IsLoadingMore(
-                nextPageToLoad = lastPaginationState.nextPageToLoad
-            )
+                -> {
+                if (refresh) {
+                    PaginationState.IsRefreshing
+                } else {
+                    PaginationState.IsLoadingMore(
+                        nextPageToLoad = nextPageToLoad
+                    )
+                }
+            }
+        }
+
+        if (refresh) {
+            delay(200) // to display the refresh loader smoothly
         }
 
         val result = fetchUsersPageUseCase(
-            pageNumber = lastPaginationState.nextPageToLoad,
+            pageNumber = nextPageToLoad,
             resultsPerPage = RESULTS_PER_PAGE
         )
         processFetchPageResult(result)
