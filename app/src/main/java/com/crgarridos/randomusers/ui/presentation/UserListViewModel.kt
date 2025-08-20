@@ -20,9 +20,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 private const val RESULTS_PER_PAGE = 20
 
@@ -34,21 +34,23 @@ class UserListViewModel @Inject constructor(
 
     private sealed class PaginationState(
         open val nextPageToLoad: Int,
+        open val loadMoreErrorMessage: String? = null,
     ) {
-
         object InitialLoading : PaginationState(nextPageToLoad = 1)
-
-        data class InitialError(val message: String) : PaginationState(nextPageToLoad = 1)
-
         data class IsLoadingMore(override val nextPageToLoad: Int) : PaginationState(nextPageToLoad)
-
-        data class Success(
+        data class Idle(
             val canLoadMore: Boolean,
             override val nextPageToLoad: Int,
-        ) : PaginationState(nextPageToLoad)
+            override val loadMoreErrorMessage: String? = null,
+        ) : PaginationState(nextPageToLoad, loadMoreErrorMessage)
+
+        data class Error(
+            override val loadMoreErrorMessage: String,
+        ) : PaginationState(nextPageToLoad = 1, loadMoreErrorMessage)
     }
 
     private val paginationState = MutableStateFlow<PaginationState>(PaginationState.InitialLoading)
+
     val uiState: StateFlow<UserListUiState> = combine(
         flow = observeAllUsersUseCase(),
         flow2 = paginationState,
@@ -61,20 +63,38 @@ class UserListViewModel @Inject constructor(
     private fun combineUsersWithPaginationState(
         users: List<User>,
         state: PaginationState,
-    ) = when (state) {
-        is PaginationState.InitialError -> UserListUiState.Error(state.message)
-        is PaginationState.InitialLoading -> UserListUiState.Loading
-        is PaginationState.IsLoadingMore -> UserListUiState.Success(
-            users = users.toUiUserList(),
-            canLoadMore = false,
-            isLoadingMore = true
-        )
+    ): UserListUiState {
+        return when (state) {
+            is PaginationState.InitialLoading -> UserListUiState.Loading
 
-        is PaginationState.Success -> UserListUiState.Success(
-            users = users.toUiUserList(),
-            canLoadMore = state.canLoadMore,
-            isLoadingMore = false
-        )
+            is PaginationState.Error -> {
+                if (users.isEmpty()) {
+                    UserListUiState.Error(message = state.loadMoreErrorMessage)
+                } else {
+                    UserListUiState.Success(
+                        users = users.toUiUserList(),
+                        canLoadMore = true,
+                        isLoadingMore = false,
+                        loadMoreErrorMessage = state.loadMoreErrorMessage
+                    )
+                }
+            }
+
+            is PaginationState.IsLoadingMore -> UserListUiState.Success(
+                users = users.toUiUserList(),
+                canLoadMore = false,
+                isLoadingMore = true,
+                loadMoreErrorMessage = state.loadMoreErrorMessage
+            )
+
+            is PaginationState.Idle -> UserListUiState.Success(
+                users = users.toUiUserList(),
+                canLoadMore = state.canLoadMore,
+                isLoadingMore = false,
+                loadMoreErrorMessage = state.loadMoreErrorMessage
+            )
+        }
+
     }
 
     init {
@@ -85,6 +105,16 @@ class UserListViewModel @Inject constructor(
         fetchUsers()
     }
 
+    fun clearLoadMoreErrorMessage() {
+        paginationState.update { currentState ->
+            if (currentState is PaginationState.Idle && currentState.loadMoreErrorMessage != null) {
+                currentState.copy(loadMoreErrorMessage = null)
+            } else {
+                currentState
+            }
+        }
+    }
+
     private fun fetchUsers() = viewModelScope.launch {
 
         val lastPaginationState = paginationState.value
@@ -93,8 +123,9 @@ class UserListViewModel @Inject constructor(
             is PaginationState.IsLoadingMore -> return@launch
 
             is PaginationState.InitialLoading,
-            is PaginationState.InitialError,
-            is PaginationState.Success -> PaginationState.IsLoadingMore(
+            is PaginationState.Error,
+            is PaginationState.Idle,
+                -> PaginationState.IsLoadingMore(
                 nextPageToLoad = lastPaginationState.nextPageToLoad
             )
         }
@@ -103,46 +134,30 @@ class UserListViewModel @Inject constructor(
             pageNumber = lastPaginationState.nextPageToLoad,
             resultsPerPage = RESULTS_PER_PAGE
         )
-        processFetchPageResult(result, lastPaginationState)
+        processFetchPageResult(result)
     }
 
     private fun processFetchPageResult(
         result: DomainResult<UserError, PaginatedUserList>,
-        lastPaginationState: PaginationState,
     ) {
         when (result) {
             is DomainSuccess -> {
                 val nextPage = result.data.nextPage
-                paginationState.value = PaginationState.Success(
+                paginationState.value = PaginationState.Idle(
                     canLoadMore = nextPage > 0,
                     nextPageToLoad = nextPage,
                 )
             }
 
             is DomainError -> {
-                processFetchPageError(result, lastPaginationState)
+                val errorMessage = when (result) {
+                    is NetworkError.ConnectivityError -> "Network connection error. Please check your connection."// TODO Android resources (not here in the VM please)
+                    is NetworkError.ServerError -> "Server error. Please try again later."
+                    else -> "Failed to load users. Please try again."
+                }
+                paginationState.value = PaginationState.Error(errorMessage)
             }
         }
     }
 
-    private fun processFetchPageError(
-        result: DomainError<UserError>,
-        lastPaginationState: PaginationState,
-    ) {
-        val errorMessage = when (result) {
-            is NetworkError.ConnectivityError -> "Network connection error. Please check your connection."// TODO Android resources
-            is NetworkError.ServerError -> "Server error. Please try again later."
-            else -> "Failed to load users."
-        }
-
-        if (lastPaginationState is PaginationState.InitialLoading) {
-            paginationState.value = PaginationState.InitialError(errorMessage)
-        } else {
-            paginationState.value = PaginationState.Success(
-                canLoadMore = lastPaginationState.nextPageToLoad > 0,
-                nextPageToLoad = lastPaginationState.nextPageToLoad,
-            )
-            // Handle error for load more, TODO snackbar
-        }
-    }
 }

@@ -24,10 +24,15 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,6 +61,7 @@ sealed class UserListUiState {
         val users: List<UiUser>,
         val canLoadMore: Boolean,
         val isLoadingMore: Boolean,
+        val loadMoreErrorMessage: String? = null,
     ) : UserListUiState()
 
     data class Error(val message: String) : UserListUiState()
@@ -67,9 +73,32 @@ fun UserListScreen(
     uiState: UserListUiState,
     onUserClick: (userId: String) -> Unit,
     onLoadMoreRequested: () -> Unit,
-    onRetry: () -> Unit,
+    onRetry: () -> Unit = {},
+    onClearLoadMoreError: () -> Unit = {},
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    if (uiState is UserListUiState.Success && uiState.loadMoreErrorMessage != null) {
+        val currentLoadMoreErrorMessage = uiState.loadMoreErrorMessage
+        LaunchedEffect(currentLoadMoreErrorMessage) {
+            snackbarHostState.showSnackbar(
+                message = currentLoadMoreErrorMessage,
+                duration = SnackbarDuration.Short
+            )
+            onClearLoadMoreError()
+        }
+    }
+
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { snackbarData ->
+                Snackbar(
+                    snackbarData = snackbarData,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
@@ -97,30 +126,32 @@ fun UserListScreen(
                     .padding(paddingValues)
             )
 
-            UserListUiState.Empty -> EmptyScreen(onRetry)
+            UserListUiState.Empty -> EmptyScreen(
+                onRetry = onRetry,
+                modifier = Modifier.padding(paddingValues),
+            )
         }
     }
 }
 
 @Composable
 private fun ListScreenContent(
+    modifier: Modifier = Modifier,
     uiState: UserListUiState.Success,
     onUserClick: (userId: String) -> Unit,
     onLoadMoreRequested: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-
     val listState = rememberLazyListState()
     LazyColumn(
         state = listState,
         modifier = modifier.padding(horizontal = 16.dp),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
-        itemsIndexed(uiState.users, key = { _, user -> user.id }) { index, user ->
+        itemsIndexed(uiState.users, key = { _, user -> user.id }) { _, user ->
             UserListItem(user = user, onClick = { onUserClick(user.id) })
         }
 
-        if (uiState.canLoadMore || uiState.isLoadingMore) {
+        if (uiState.isLoadingMore) {
             item {
                 Box(
                     modifier = Modifier
@@ -201,12 +232,13 @@ private fun UserListItem(
     }
 }
 @Composable
-private fun EmptyScreen(onRetry: () -> Unit) {
+private fun EmptyScreen(modifier: Modifier, onRetry: () -> Unit) {
     FullScreenStatusWithRetry(
         message = "No users available",
         icon = Icons.Filled.Face,
         color = MaterialTheme.colorScheme.error,
-        onRetry = onRetry
+        onRetry = onRetry,
+        modifier = modifier
     )
 }
 @Composable
