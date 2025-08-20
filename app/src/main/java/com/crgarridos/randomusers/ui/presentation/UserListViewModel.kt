@@ -15,9 +15,10 @@ import com.crgarridos.randomusers.ui.compose.userlist.UserListUiState
 import com.crgarridos.randomusers.ui.presentation.mapper.toUiUserList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -52,7 +53,10 @@ class UserListViewModel @Inject constructor(
         flow = observeAllUsersUseCase(),
         flow2 = paginationState,
         transform = ::combineUsersWithPaginationState
-    ).stateIn(viewModelScope, Eagerly, UserListUiState.Loading)
+    ).distinctUntilChanged()
+        .stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), UserListUiState.Loading
+        )
 
     private fun combineUsersWithPaginationState(
         users: List<User>,
@@ -108,9 +112,10 @@ class UserListViewModel @Inject constructor(
     ) {
         when (result) {
             is DomainSuccess -> {
+                val nextPage = result.data.nextPage
                 paginationState.value = PaginationState.Success(
-                    canLoadMore = lastPaginationState.nextPageToLoad > 0,
-                    nextPageToLoad = lastPaginationState.nextPageToLoad + 1,
+                    canLoadMore = nextPage > 0,
+                    nextPageToLoad = nextPage,
                 )
             }
 
@@ -133,6 +138,10 @@ class UserListViewModel @Inject constructor(
         if (lastPaginationState is PaginationState.InitialLoading) {
             paginationState.value = PaginationState.InitialError(errorMessage)
         } else {
+            paginationState.value = PaginationState.Success(
+                canLoadMore = lastPaginationState.nextPageToLoad > 0,
+                nextPageToLoad = lastPaginationState.nextPageToLoad,
+            )
             // Handle error for load more, TODO snackbar
         }
     }
