@@ -71,15 +71,19 @@ sealed class UserListUiState {
     data class Error(val message: String) : UserListUiState()
 }
 
+interface UserListUiCallbacks {
+    fun onUserClicked(userId: String)
+    fun onLoadMoreUsersRequested()
+    fun onRefresh()
+    fun onRetry()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserListScreen(
     uiState: UserListUiState,
     uiEvent: UserListUiEvent? = null,
-    onUserClick: (userId: String) -> Unit,
-    onLoadMoreRequested: () -> Unit,
-    onRefresh: () -> Unit = {},
-    onRetry: () -> Unit = {},
+    callbacks: UserListUiCallbacks = EmptyUserListUiCallbacks,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -116,22 +120,22 @@ fun UserListScreen(
             is UserListUiState.Loading -> FullScreenLoading()
             is UserListUiState.Error -> ErrorScreen(
                 message = uiState.message,
-                onRetry = onRetry,
+                onRetry = callbacks::onRetry,
                 modifier = Modifier.padding(paddingValues)
             )
 
             is UserListUiState.Success -> ListScreenContent(
                 uiState = uiState,
-                onUserClick = onUserClick,
-                onLoadMoreRequested = onLoadMoreRequested,
-                onRefresh = onRefresh,
+                onUserClick = callbacks::onUserClicked,
+                onLoadMoreRequested = callbacks::onLoadMoreUsersRequested,
+                onRefresh = callbacks::onRefresh,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
             )
 
             UserListUiState.Empty -> EmptyScreen(
-                onRetry = onRetry,
+                onRetry = callbacks::onRetry,
                 modifier = Modifier.padding(paddingValues),
             )
         }
@@ -270,8 +274,6 @@ fun UserListScreenPreview_Success() {
                 canLoadMore = true,
                 isLoadingMore = false
             ),
-            onUserClick = {},
-            onLoadMoreRequested = {},
         )
     }
 }
@@ -282,8 +284,6 @@ private fun UserListScreenPreview_Loading() {
     RandomUsersTheme {
         UserListScreen(
             uiState = UserListUiState.Loading,
-            onUserClick = {},
-            onLoadMoreRequested = {},
         )
     }
 }
@@ -294,8 +294,6 @@ private fun UserListScreenPreview_Error() {
     RandomUsersTheme {
         UserListScreen(
             uiState = UserListUiState.Error("Failed to load users."),
-            onUserClick = {},
-            onLoadMoreRequested = {},
         )
     }
 }
@@ -318,6 +316,13 @@ internal val previewUserList = List(20) { index ->
         largePictureUrl = "https://randomuser.me/api/portraits/${if (index % 2 == 0) "men" else "women"}/$index.jpg",
         location = "147 Rue Chantilly, 75008 Paris, France"
     )
+}
+
+private object EmptyUserListUiCallbacks : UserListUiCallbacks {
+    override fun onUserClicked(userId: String) = Unit
+    override fun onLoadMoreUsersRequested() = Unit
+    override fun onRefresh() = Unit
+    override fun onRetry() = Unit
 }
 
 /// TODO Preview dark mode

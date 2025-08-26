@@ -11,6 +11,7 @@ import com.crgarridos.randomusers.domain.model.util.DomainSuccess
 import com.crgarridos.randomusers.domain.model.util.NetworkError
 import com.crgarridos.randomusers.domain.usecase.FetchUsersPageUseCase
 import com.crgarridos.randomusers.domain.usecase.ObserveAllUsersUseCase
+import com.crgarridos.randomusers.ui.compose.userlist.UserListUiCallbacks
 import com.crgarridos.randomusers.ui.compose.userlist.UserListUiState
 import com.crgarridos.randomusers.ui.presentation.mapper.toUiUserList
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +34,7 @@ private const val RESULTS_PER_PAGE = 20
 class UserListViewModel @Inject constructor(
     observeAllUsersUseCase: ObserveAllUsersUseCase,
     private val fetchUsersPageUseCase: FetchUsersPageUseCase,
-) : ViewModel() {
+) : ViewModel(), UserListUiCallbacks {
 
     private sealed class PaginationState(
         open val nextPageToLoad: Int,
@@ -114,16 +115,20 @@ class UserListViewModel @Inject constructor(
         fetchUsers()
     }
 
-    fun loadMoreUsers() {
+    override fun onLoadMoreUsersRequested() {
         fetchUsers()
     }
 
-    fun refresh() {
+    override fun onRefresh() {
         fetchUsers(refresh = true)
     }
 
-    fun retry() {
+    override fun onRetry() {
         fetchUsers()
+    }
+
+    override fun onUserClicked(userId: String) {
+        TODO("Not yet implemented") // next commit
     }
 
     private fun fetchUsers(refresh: Boolean = false) = viewModelScope.launch {
