@@ -7,10 +7,20 @@ data class User(
     val firstName: String,
     val lastName: String,
     val email: String,
-    val phone: String?,
+    val phone: String,
     val thumbnailUrl: String,
-    val largePictureUrl: String?,
-    val nationality: String?
+    val largePictureUrl: String,
+    val nationality: String,
+    val location: UserLocation,
+)
+
+data class UserLocation(
+    val streetNumber: String,
+    val streetName: String,
+    val city: String,
+    val state: String,
+    val country: String,
+    val postcode: String
 )
 
 open class UserError(message: String): DomainError<Nothing>
