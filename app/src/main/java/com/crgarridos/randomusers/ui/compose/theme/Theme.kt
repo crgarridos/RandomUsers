@@ -10,34 +10,40 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    background = DarkGray,
-    surface = DarkGray,
-    onPrimary = PurpleGrey40,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = LightGray,
-    onSurface = LightGray,
-    error = RedError,
-    onError = Color.White
-)
+
+val BluePrimary = Color(0xFF1565C0)
+
+val BlueSecondary = Color(0xFF42A5F5)
+val BlueLight = Color(0xFFBBDEFB)
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
+    primary = BluePrimary,
+    secondary = BlueSecondary,
+    tertiary = BlueLight,
     background = White,
-    surface = LightGray, // Cards and surfaces
-    onPrimary = Color.White,
-    onSecondary = Color.Black,
-    onTertiary = Color.Black,
-    onBackground = Color.Black,
-    onSurface = Color.Black,
+    surface = LightGray,
+    onPrimary = White,
+    onSecondary = White,
+    onTertiary = DarkGray,
+    onBackground = DarkGray,
+    onSurface = DarkGray,
     error = RedError,
-    onError = Color.White
+    onError = White
+)
+
+private val DarkColorScheme = darkColorScheme(
+    primary = BluePrimary,
+    secondary = BlueSecondary,
+    tertiary = BlueLight,
+    background = DeepDarkGray,
+    surface = DarkGray,
+    onPrimary = White,
+    onSecondary = White,
+    onTertiary = LightGray,
+    onBackground = White,
+    onSurface = White,
+    error = RedError,
+    onError = White
 )
 
 @Composable
@@ -60,7 +66,7 @@ fun RandomUsersTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // We'll use default Typography for now, or you can define Type.kt
+        typography = Typography,
         content = content
     )
 }

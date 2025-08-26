@@ -217,7 +217,8 @@ private fun UserListItem(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(user.thumbnailUrl)
                     .crossfade(true)
-                    // TODO placeholder
+                    .placeholder(R.drawable.profile_placeholder)
+                    .error(R.drawable.profile_placeholder)
                     .build(),
                 contentDescription = "${user.fullName} thumbnail",
                 contentScale = ContentScale.Crop,
@@ -304,16 +305,12 @@ private fun UserListItemPreview() {
 internal val previewUserList = List(20) { index ->
     UiUser(
         id = "id_$index",
-        title = if (index % 2 == 0) "Mr" else "Ms",
-        firstName = "User",
-        lastName = "$index",
+        fullName = (if (index % 2 == 0) "Mr" else "Ms") + " User " + index,
         email = "user$index@example.com",
         phone = "555-010$index",
         thumbnailUrl = "https://randomuser.me/api/portraits/thumb/${if (index % 2 == 0) "men" else "women"}/$index.jpg",//TODO overkill?
         largePictureUrl = "https://randomuser.me/api/portraits/${if (index % 2 == 0) "men" else "women"}/$index.jpg",
-        nationality = "US",
-        city = "Anytown",
-        gender = if (index % 2 == 0) "male" else "female"
+        location = "147 Rue Chantilly, 75008 Paris, France"
     )
 }
 
