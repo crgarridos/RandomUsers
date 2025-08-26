@@ -19,6 +19,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
@@ -52,6 +53,8 @@ class UserListViewModelTest {
         viewModel.uiState.test {
             assertEquals("Initial state should be Loading", UserListUiState.Loading, awaitItem())
 
+            assertIsLoadingMore(awaitItem())
+
             val successState = awaitItem() as UserListUiState.Success
             assertEquals("Users should match fetched data",
                 page1Users.toUiUserList(),
@@ -78,6 +81,8 @@ class UserListViewModelTest {
 
         viewModel.uiState.test {
             assertEquals("Initial state should be Loading", UserListUiState.Loading, awaitItem())
+
+            assertIsLoadingMore(awaitItem())
             val errorState = awaitItem() as UserListUiState.Error
             assertTrue(
                 "Error message should reflect network error",
@@ -88,7 +93,7 @@ class UserListViewModelTest {
     }
 
     @Test
-    fun `loadMoreUsers - fetches next page and appends users on success`() = runTestUsingMainDispatcher {
+    fun `loadMoreUsers - fetches next page and appends users on success`() = runTest {
         val page1Users = UserFixtures.generateRandomUsers(resultsPerPage)
         val page2Users = UserFixtures.generateRandomUsers(resultsPerPage)
 
@@ -119,13 +124,6 @@ class UserListViewModelTest {
 
             observedUsers.value = page1Users + page2Users
 
-            val intermediarySuccessState = awaitItem() as UserListUiState.Success
-            assertEquals(
-                "Users should still be page 1 users before second page is combined",
-                page1Users.toUiUserList(),
-                intermediarySuccessState.users
-            )
-
             val finalSuccessState = awaitItem() as UserListUiState.Success
             assertEquals(
                 "Users should be combined from page 1 and 2",
@@ -136,9 +134,6 @@ class UserListViewModelTest {
             expectNoEvents()
         }
     }
-
-    fun runTestUsingMainDispatcher(testBody: suspend TestScope.() -> Unit) =
-        runTest(context = mainCoroutineRule.testDispatcher, testBody = testBody)
 
     @Test
     fun `loadMoreUsers - fetches next page should indicate loading more before success`() = runTest {
@@ -157,6 +152,7 @@ class UserListViewModelTest {
 
         viewModel.uiState.test {
             awaitItem() as UserListUiState.Loading
+            assertIsLoadingMore(awaitItem())
             awaitItem() as UserListUiState.Success
 
             viewModel.loadMoreUsers()
@@ -193,6 +189,7 @@ class UserListViewModelTest {
 
         viewModel.uiState.test {
             awaitItem() as UserListUiState.Loading
+            assertIsLoadingMore(awaitItem())
             awaitItem() as UserListUiState.Success
 
             viewModel.loadMoreUsers()
@@ -230,6 +227,7 @@ class UserListViewModelTest {
 
         viewModel.uiState.test {
             awaitItem() as UserListUiState.Loading
+            assertIsLoadingMore(awaitItem())
             awaitItem() as UserListUiState.Success
 
             viewModel.loadMoreUsers()
@@ -258,8 +256,10 @@ class UserListViewModelTest {
             )
         )
 
-        viewModel.uiState.test {
-            skipItems(2)
+        viewModel.uiState.onEach { println(it) }.test {
+            awaitItem() as UserListUiState.Loading
+            assertIsLoadingMore(awaitItem())
+            awaitItem() as UserListUiState.Success
 
             viewModel.loadMoreUsers()
 
@@ -304,5 +304,10 @@ class UserListViewModelTest {
             }
         }
         return UserListViewModel(observeAllUsersUseCase, fetchUsersPageUseCase)
+    }
+    private fun assertIsLoadingMore(state: UserListUiState) {
+        val loadingMoreState = state as UserListUiState.Success
+        assertTrue("Is loading more", loadingMoreState.isLoadingMore)
+
     }
 }
