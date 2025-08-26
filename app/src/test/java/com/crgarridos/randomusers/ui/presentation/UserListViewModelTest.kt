@@ -273,8 +273,8 @@ class UserListViewModelTest {
                 page1Users.toUiUserList(),
                 errorWhileLoadingMoreState.users
             )
-            assertTrue(
-                "Should still be able to retry loading more",
+            assertFalse(
+                "Should not still be able to retry loading more",
                 errorWhileLoadingMoreState.canLoadMore
             )
             assertFalse(

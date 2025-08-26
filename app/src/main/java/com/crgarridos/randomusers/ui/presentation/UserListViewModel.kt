@@ -15,13 +15,15 @@ import com.crgarridos.randomusers.ui.compose.userlist.UserListUiState
 import com.crgarridos.randomusers.ui.presentation.mapper.toUiUserList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,23 +37,28 @@ class UserListViewModel @Inject constructor(
 
     private sealed class PaginationState(
         open val nextPageToLoad: Int,
-        open val loadMoreErrorMessage: String? = null,
     ) {
         object InitialLoading : PaginationState(nextPageToLoad = 1)
         data class IsLoadingMore(override val nextPageToLoad: Int) : PaginationState(nextPageToLoad)
         object IsRefreshing : PaginationState(nextPageToLoad = 1)
-        data class Idle(
-            val canLoadMore: Boolean,
+        data class Idle(            val canLoadMore: Boolean,
             override val nextPageToLoad: Int,
-            override val loadMoreErrorMessage: String? = null,
-        ) : PaginationState(nextPageToLoad, loadMoreErrorMessage)
+        ) : PaginationState(nextPageToLoad)
 
         data class Error(
-            override val loadMoreErrorMessage: String,
-        ) : PaginationState(nextPageToLoad = 1, loadMoreErrorMessage)
+            override val nextPageToLoad: Int,
+            val message: String,
+        ) : PaginationState(nextPageToLoad = nextPageToLoad)
+    }
+
+    sealed interface UserListUiEvent {
+        class ShowSnackbar(val message: String) : UserListUiEvent
     }
 
     private val paginationState = MutableStateFlow<PaginationState>(PaginationState.InitialLoading)
+
+    private val _uiEvent = MutableSharedFlow<UserListUiEvent>()
+    val uiEvent: SharedFlow<UserListUiEvent> = _uiEvent.asSharedFlow()
 
     val uiState: StateFlow<UserListUiState> = combine(
         flow = observeAllUsersUseCase(),
@@ -71,13 +78,12 @@ class UserListViewModel @Inject constructor(
 
             is PaginationState.Error -> {
                 if (users.isEmpty()) {
-                    UserListUiState.Error(message = state.loadMoreErrorMessage)
+                    UserListUiState.Error(message = state.message)
                 } else {
                     UserListUiState.Success(
                         users = users.toUiUserList(),
-                        canLoadMore = true,
+                        canLoadMore = false,
                         isLoadingMore = false,
-                        loadMoreErrorMessage = state.loadMoreErrorMessage
                     )
                 }
             }
@@ -86,7 +92,6 @@ class UserListViewModel @Inject constructor(
                 users = users.toUiUserList(),
                 canLoadMore = false,
                 isLoadingMore = true,
-                loadMoreErrorMessage = state.loadMoreErrorMessage
             )
 
             is PaginationState.IsRefreshing -> UserListUiState.Success(
@@ -94,14 +99,12 @@ class UserListViewModel @Inject constructor(
                 canLoadMore = false,
                 isLoadingMore = false,
                 isRefreshing = true,
-                loadMoreErrorMessage = state.loadMoreErrorMessage
             )
 
             is PaginationState.Idle -> UserListUiState.Success(
                 users = users.toUiUserList(),
                 canLoadMore = state.canLoadMore,
                 isLoadingMore = false,
-                loadMoreErrorMessage = state.loadMoreErrorMessage
             )
         }
 
@@ -117,16 +120,6 @@ class UserListViewModel @Inject constructor(
 
     fun refresh() {
         fetchUsers(refresh = true)
-    }
-
-    fun clearLoadMoreErrorMessage() {
-        paginationState.update { currentState ->
-            if (currentState is PaginationState.Idle && currentState.loadMoreErrorMessage != null) {
-                currentState.copy(loadMoreErrorMessage = null)
-            } else {
-                currentState
-            }
-        }
     }
 
     private fun fetchUsers(refresh: Boolean = false) = viewModelScope.launch {
@@ -151,20 +144,18 @@ class UserListViewModel @Inject constructor(
                 }
             }
         }
-
-        if (refresh) {
-            delay(200) // to display the refresh loader smoothly
-        }
+        delay(200) // to display the loader smoothly
 
         val result = fetchUsersPageUseCase(
             pageNumber = nextPageToLoad,
             resultsPerPage = RESULTS_PER_PAGE
         )
-        processFetchPageResult(result)
+        processFetchPageResult(result, nextPageToLoad)
     }
 
-    private fun processFetchPageResult(
+    private suspend fun processFetchPageResult(
         result: DomainResult<UserError, PaginatedUserList>,
+        requestedPage: Int,
     ) {
         when (result) {
             is DomainSuccess -> {
@@ -181,8 +172,19 @@ class UserListViewModel @Inject constructor(
                     is NetworkError.ServerError -> "Server error. Please try again later."
                     else -> "Failed to load users. Please try again."
                 }
-                paginationState.value = PaginationState.Error(errorMessage)
+                paginationState.value = PaginationState.Error(
+                    nextPageToLoad = requestedPage,
+                    message = errorMessage,
+                )
+                showSnackbarIfNecessary(errorMessage)
             }
+        }
+    }
+
+    private suspend fun showSnackbarIfNecessary(errorMessage: String) {
+        val currentUiState = uiState.value
+        if (currentUiState is UserListUiState.Success && currentUiState.users.isNotEmpty()) {
+            _uiEvent.emit(UserListUiEvent.ShowSnackbar(errorMessage))
         }
     }
 

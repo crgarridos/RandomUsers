@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -52,6 +53,7 @@ import com.crgarridos.randomusers.ui.compose.common.FullScreenLoading
 import com.crgarridos.randomusers.ui.compose.common.FullScreenStatusWithRetry
 import com.crgarridos.randomusers.ui.compose.model.UiUser
 import com.crgarridos.randomusers.ui.compose.theme.RandomUsersTheme
+import com.crgarridos.randomusers.ui.presentation.UserListViewModel.UserListUiEvent
 
 private const val ITEMS_COUNT_THRESHOLD = 5
 
@@ -73,21 +75,20 @@ sealed class UserListUiState {
 @Composable
 fun UserListScreen(
     uiState: UserListUiState,
+    uiEvent: UserListUiEvent? = null,
     onUserClick: (userId: String) -> Unit,
     onLoadMoreRequested: () -> Unit,
     onRefresh: () -> Unit = {},
-    onClearLoadMoreError: () -> Unit = {},
+    onRetry: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
-    if (uiState is UserListUiState.Success && uiState.loadMoreErrorMessage != null) {
-        val currentLoadMoreErrorMessage = uiState.loadMoreErrorMessage
-        LaunchedEffect(currentLoadMoreErrorMessage) {
+    LaunchedEffect(uiEvent) {
+        if (uiEvent is UserListUiEvent.ShowSnackbar) {
             snackbarHostState.showSnackbar(
-                message = currentLoadMoreErrorMessage,
-                duration = SnackbarDuration.Short
+                message = uiEvent.message,
+                duration = SnackbarDuration.Short,
             )
-            onClearLoadMoreError()
         }
     }
 
@@ -97,7 +98,7 @@ fun UserListScreen(
                 Snackbar(
                     snackbarData = snackbarData,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
         },
@@ -115,7 +116,7 @@ fun UserListScreen(
             is UserListUiState.Loading -> FullScreenLoading()
             is UserListUiState.Error -> ErrorScreen(
                 message = uiState.message,
-                onRetry = onRefresh,
+                onRetry = onRetry,
                 modifier = Modifier.padding(paddingValues)
             )
 
@@ -130,7 +131,7 @@ fun UserListScreen(
             )
 
             UserListUiState.Empty -> EmptyScreen(
-                onRetry = onRefresh,
+                onRetry = onRetry,
                 modifier = Modifier.padding(paddingValues),
             )
         }
@@ -160,15 +161,20 @@ private fun ListScreenContent(
                 UserListItem(user = user, onClick = { onUserClick(user.id) })
             }
 
-            if (uiState.isLoadingMore) {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (uiState.isLoadingMore) {
                         CircularProgressIndicator()
+
+                    } else {
+                        Button(onClick = onLoadMoreRequested) {
+                            Text("Load more")
+                        }
                     }
                 }
             }
@@ -314,3 +320,13 @@ internal val previewUserList = List(20) { index ->
     )
 }
 
+/// TODO Preview dark mode
+/// TODO param tests
+/// TODO screenshot test + UI
+/// TODO interface for callbacks
+/// TODO Test UI for composables??
+/// TODO Test UI for states
+/// TODO skeletons loader ?
+/// TODO save handle state
+// TODO fix(?) error when offline but going back from details
+// TODO retry infinite when offline -> button try again
