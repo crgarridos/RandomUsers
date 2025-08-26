@@ -28,57 +28,57 @@ fun RemoteUser.toDomainUser(): User {
 }
 
 fun List<RemoteUser>.toDomainUserList(): List<User> {
-    return this.map(RemoteUser::toDomainUser)
+    return map(RemoteUser::toDomainUser)
 }
 
 fun User.toRemoteUser(): RemoteUser {
     val remoteName = RemoteName(
-        title = this.title,
-        first = this.firstName,
-        last = this.lastName
+        title = title,
+        first = firstName,
+        last = lastName
     )
 
     val remotePicture = RemotePicture(
-        large = this.largePictureUrl,
+        large = largePictureUrl,
         medium = null,
-        thumbnail = this.thumbnailUrl
+        thumbnail = thumbnailUrl
     )
 
     val remoteLocation = RemoteUserLocation(
         street = RemoteStreet(
-            number = this.location.streetNumber,
-            name = this.location.streetName
+            number = location.streetNumber,
+            name = location.streetName
         ),
-        city = this.location.city,
-        state = this.location.state,
-        country = this.location.country,
-        postcode = this.location.postcode
+        city = location.city,
+        state = location.state,
+        country = location.country,
+        postcode = location.postcode
     )
 
     return RemoteUser(
         name = remoteName,
-        email = this.email,
-        phone = this.phone,
+        email = email,
+        phone = phone,
         picture = remotePicture,
-        nationality = this.nationality,
+        nationality = nationality,
         location = remoteLocation,
     )
 }
 
 private fun RemoteUserLocation.toDomainUserLocation(): UserLocation {
-    requireNotNull(this.street)
+    requireNotNull(street)
 
     return UserLocation(
-        streetNumber = requireNotNull(this.street.number),
-        streetName = requireNotNull(this.street.name),
-        city = requireNotNull(this.city),
-        state = requireNotNull(this.state),
-        country = requireNotNull(this.country),
-        postcode = requireNotNull(this.postcode),
+        streetNumber = requireNotNull(street.number),
+        streetName = requireNotNull(street.name),
+        city = requireNotNull(city),
+        state = requireNotNull(state),
+        country = requireNotNull(country),
+        postcode = requireNotNull(postcode),
     )
 }
 
 
 fun List<User>.toRemoteUserList(): List<RemoteUser> {
-    return this.map(User::toRemoteUser)
+    return map(User::toRemoteUser)
 }

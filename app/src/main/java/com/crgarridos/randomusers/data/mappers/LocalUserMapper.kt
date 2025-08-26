@@ -9,21 +9,21 @@ import com.crgarridos.randomusers.domain.model.UserLocation
 
 fun User.toLocalUser(): LocalUser {
     return LocalUser(
-        email = this.email,
-        name = LocalUserName(title = this.title, first = this.firstName, last = this.lastName),
-        phone = this.phone,
+        email = email,
+        name = LocalUserName(title = title, first = firstName, last = lastName),
+        phone = phone,
         picture = LocalUserPicture(
-            large = this.largePictureUrl,
-            thumbnail = this.thumbnailUrl
+            large = largePictureUrl,
+            thumbnail = thumbnailUrl
         ),
-        nationality = this.nationality,
+        nationality = nationality,
         location = LocalUserLocation(
-            streetNumber = this.location.streetNumber,
-            streetName = this.location.streetName,
-            city = this.location.city,
-            state = this.location.state,
-            country = this.location.country,
-            postcode = this.location.postcode
+            streetNumber = location.streetNumber,
+            streetName = location.streetName,
+            city = location.city,
+            state = location.state,
+            country = location.country,
+            postcode = location.postcode
         )
     )
 }
@@ -31,30 +31,30 @@ fun User.toLocalUser(): LocalUser {
 
 
 fun List<User>.toLocalUserList(): List<LocalUser> {
-    return this.map { it.toLocalUser() }
+    return map { it.toLocalUser() }
 }
 
 fun LocalUser.toDomainUser(): User {
     return User(
-        title = this.name.title,
-        firstName = this.name.first,
-        lastName = this.name.last,
-        email = this.email,
-        phone = this.phone,
-        thumbnailUrl = this.picture.thumbnail,
-        largePictureUrl = this.picture.large,
-        nationality = this.nationality,
+        title = name.title,
+        firstName = name.first,
+        lastName = name.last,
+        email = email,
+        phone = phone,
+        thumbnailUrl = picture.thumbnail,
+        largePictureUrl = picture.large,
+        nationality = nationality,
         location = UserLocation(
-            streetNumber = this.location.streetNumber,
-            streetName = this.location.streetName,
-            city = this.location.city,
-            state = this.location.state,
-            country = this.location.country,
-            postcode = this.location.postcode,
+            streetNumber = location.streetNumber,
+            streetName = location.streetName,
+            city = location.city,
+            state = location.state,
+            country = location.country,
+            postcode = location.postcode,
         )
     )
 }
 
 fun List<LocalUser>.toDomainUserList(): List<User> {
-    return this.map { it.toDomainUser() }
+    return map { it.toDomainUser() }
 }

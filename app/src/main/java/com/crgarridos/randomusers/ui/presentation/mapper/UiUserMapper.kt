@@ -6,13 +6,13 @@ import com.crgarridos.randomusers.ui.compose.model.UiUser
 
 fun User.toUiUser(): UiUser {
     return UiUser(
-        id = this.email,
+        id = email,
         fullName = getUiFullName(),
-        email = this.email,
-        phone = this.phone,
-        thumbnailUrl = this.thumbnailUrl,
-        largePictureUrl = this.largePictureUrl,
-        location = this.location.toUiUserLocation(),
+        email = email,
+        phone = phone,
+        thumbnailUrl = thumbnailUrl,
+        largePictureUrl = largePictureUrl,
+        location = location.toUiUserLocation(),
     )
 }
 
@@ -23,5 +23,5 @@ private fun UserLocation.toUiUserLocation(): String {
     return "$streetNumber $streetName, $postcode $city, $state, $country"
 }
 fun List<User>.toUiUserList(): List<UiUser> {
-    return this.map { it.toUiUser() }
+    return map { it.toUiUser() }
 }
