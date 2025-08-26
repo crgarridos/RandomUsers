@@ -122,6 +122,10 @@ class UserListViewModel @Inject constructor(
         fetchUsers(refresh = true)
     }
 
+    fun retry() {
+        fetchUsers()
+    }
+
     private fun fetchUsers(refresh: Boolean = false) = viewModelScope.launch {
 
         val lastPaginationState = paginationState.value

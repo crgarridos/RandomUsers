@@ -38,17 +38,19 @@ class MainActivity : ComponentActivity() {
                     ) {
                         val viewModel: UserListViewModel = hiltViewModel()
                         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+                        val uiEvent by viewModel.uiEvent.collectAsStateWithLifecycle(null)
 
                         UserListScreen(
                             uiState = uiState,
+                            uiEvent = uiEvent,
                             onUserClick = { userId ->
                                 navController.navigate(
                                     AppDestinations.UserDetail.createRouteWithArgs(userId = userId)
                                 )
                             },
                             onLoadMoreRequested = viewModel::loadMoreUsers,
+                            onRetry = viewModel::retry,
                             onRefresh = viewModel::refresh,
-                            onClearLoadMoreError = viewModel::clearLoadMoreErrorMessage,
                         )
                     }
                     composable(
