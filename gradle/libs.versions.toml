@@ -11,6 +11,7 @@ activityCompose = "1.10.1"
 composeBom = "2025.08.00"
 moshiKotlin = "1.15.2"
 moshiKotlinCodegen = "1.15.2"
+navigationCompose = "2.9.3"
 retrofitCorconverterMoshi = "3.0.0"
 retrofit = "3.0.0"
 hilt = "2.57"
@@ -25,6 +26,7 @@ coilCompose = "2.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
