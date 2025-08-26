@@ -312,8 +312,8 @@ internal val previewUserList = List(20) { index ->
         fullName = (if (index % 2 == 0) "Mr" else "Ms") + " User " + index,
         email = "user$index@example.com",
         phone = "555-010$index",
-        thumbnailUrl = "https://randomuser.me/api/portraits/thumb/${if (index % 2 == 0) "men" else "women"}/$index.jpg",//TODO overkill?
-        largePictureUrl = "https://randomuser.me/api/portraits/${if (index % 2 == 0) "men" else "women"}/$index.jpg",
+        thumbnailUrl = "https://actuallywhatever-as-preview-dont-perform-network-calls.com",
+        largePictureUrl = "https://actuallywhatever-as-preview-dont-perform-network-calls.com",
         location = "147 Rue Chantilly, 75008 Paris, France"
     )
 }
