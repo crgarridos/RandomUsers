@@ -1,4 +1,4 @@
-package com.crgarridos.randomusers.ui
+package com.crgarridos.randomusers.ui.navigation
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NamedNavArgument

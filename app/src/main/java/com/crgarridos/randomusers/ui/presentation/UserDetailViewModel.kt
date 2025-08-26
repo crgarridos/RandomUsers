@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.crgarridos.randomusers.domain.model.util.DomainSuccess
 import com.crgarridos.randomusers.domain.usecase.GetUserByIdUseCase
-import com.crgarridos.randomusers.ui.AppDestinations.UserDetail.getUserId
+import com.crgarridos.randomusers.ui.navigation.AppDestinations.UserDetail.getUserId
 import com.crgarridos.randomusers.ui.compose.userdetail.UserDetailUiState
 import com.crgarridos.randomusers.ui.presentation.mapper.toUiUser
 import dagger.hilt.android.lifecycle.HiltViewModel

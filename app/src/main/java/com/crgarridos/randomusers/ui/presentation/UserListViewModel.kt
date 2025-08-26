@@ -54,6 +54,7 @@ class UserListViewModel @Inject constructor(
 
     sealed interface UserListUiEvent {
         class ShowSnackbar(val message: String) : UserListUiEvent
+        class NavigateToUserDetail(val userId: String) : UserListUiEvent
     }
 
     private val paginationState = MutableStateFlow<PaginationState>(PaginationState.InitialLoading)
@@ -128,7 +129,9 @@ class UserListViewModel @Inject constructor(
     }
 
     override fun onUserClicked(userId: String) {
-        TODO("Not yet implemented") // next commit
+        viewModelScope.launch {
+            _uiEvent.emit(UserListUiEvent.NavigateToUserDetail(userId))
+        }
     }
 
     private fun fetchUsers(refresh: Boolean = false) = viewModelScope.launch {
