@@ -24,4 +24,4 @@ data class UserLocation(
 )
 
 open class UserError(message: String): DomainError<Nothing>
-object UserNotFound : UserError("User not found") // TODO clean
+object UserNotFound : UserError("User not found")
