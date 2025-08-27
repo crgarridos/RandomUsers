@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">RandomUsers</string>
-    <string name="error_network_connectivity">" Network connection error. Please check your connection."</string>
+    <string name="error_network_connectivity">Network connection error. Please check your connection.</string>
     <string name="error_network_server">Server error. Please try again later.</string>
     <string name="error_unknown">An unexpected error occurred. Please try again.</string>
 </resources>
