@@ -25,7 +25,7 @@ object RandomRemoteApiResponseFixtures {
         val versions = listOf("1.3", "1.4", "2.0")
         return RemoteApiInfo(
             seed = UUID.randomUUID().toString().take(16),
-            results = resultsPerPage, // El número de resultados en esta página
+            results = resultsPerPage,
             page = page,
             version = versions.random()
         )

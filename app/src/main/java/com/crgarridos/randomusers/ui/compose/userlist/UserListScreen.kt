@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,9 +54,21 @@ import com.crgarridos.randomusers.ui.compose.common.FullScreenLoading
 import com.crgarridos.randomusers.ui.compose.common.FullScreenStatusWithRetry
 import com.crgarridos.randomusers.ui.compose.model.UiUser
 import com.crgarridos.randomusers.ui.compose.theme.RandomUsersTheme
+import com.crgarridos.randomusers.ui.compose.userlist.UserListScreenTestTags.TEST_TAG_LOAD_MORE_BUTTON
+import com.crgarridos.randomusers.ui.compose.userlist.UserListScreenTestTags.buildUserItemTestTag
 import com.crgarridos.randomusers.ui.presentation.UserListViewModel.UserListUiEvent
+import org.jetbrains.annotations.VisibleForTesting
 
 private const val ITEMS_COUNT_THRESHOLD = 5
+
+@VisibleForTesting
+internal object UserListScreenTestTags {
+    const val TEST_TAG_LIST_SCREEN_CONTENT = "UserListScreen_Content"
+    const val TEST_TAG_SNACKBAR = "UserListScreen_Snackbar"
+    const val TEST_TAG_LOAD_MORE_BUTTON = "UserListScreen_LoadMoreButton"
+
+    fun buildUserItemTestTag(index: Int) = "UserListScreen_Item$index"
+}
 
 sealed class UserListUiState {
     object Loading : UserListUiState()
@@ -103,6 +116,7 @@ fun UserListScreen(
                     snackbarData = snackbarData,
                     containerColor = MaterialTheme.colorScheme.errorContainer,
                     contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.testTag(UserListScreenTestTags.TEST_TAG_SNACKBAR)
                 )
             }
         },
@@ -154,15 +168,23 @@ private fun ListScreenContent(
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
-        modifier = modifier.padding(horizontal = 16.dp)
+        modifier = modifier
+            .padding(horizontal = 16.dp)
     ) {
         val listState = rememberLazyListState()
         LazyColumn(
+            modifier = Modifier
+                .testTag(UserListScreenTestTags.TEST_TAG_LIST_SCREEN_CONTENT),
             state = listState,
             contentPadding = PaddingValues(vertical = 16.dp)
         ) {
-            itemsIndexed(uiState.users, key = { _, user -> user.id }) { _, user ->
-                UserListItem(user = user, onClick = { onUserClick(user.id) })
+            itemsIndexed(uiState.users, key = { _, user -> user.id }) { index, user ->
+                UserListItem(
+                    modifier = Modifier
+                        .testTag(buildUserItemTestTag(index)),
+                    user = user,
+                    onClick = { onUserClick(user.id) },
+                )
             }
 
             item {
@@ -176,7 +198,11 @@ private fun ListScreenContent(
                         CircularProgressIndicator()
 
                     } else {
-                        Button(onClick = onLoadMoreRequested) {
+                        Button(
+                            modifier = Modifier
+                                .testTag(TEST_TAG_LOAD_MORE_BUTTON),
+                            onClick = onLoadMoreRequested
+                        ) {
                             Text("Load more")
                         }
                     }
@@ -206,11 +232,12 @@ private fun ListScreenContent(
 
 @Composable
 private fun UserListItem(
+    modifier: Modifier = Modifier,
     user: UiUser,
     onClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable(onClick = onClick),
@@ -318,7 +345,7 @@ internal val previewUserList = List(20) { index ->
     )
 }
 
-private object EmptyUserListUiCallbacks : UserListUiCallbacks {
+internal object EmptyUserListUiCallbacks : UserListUiCallbacks {
     override fun onUserClicked(userId: String) = Unit
     override fun onLoadMoreUsersRequested() = Unit
     override fun onRefresh() = Unit
@@ -332,6 +359,6 @@ private object EmptyUserListUiCallbacks : UserListUiCallbacks {
 /// TODO Test UI for composables??
 /// TODO Test UI for states
 /// TODO skeletons loader ?
-/// TODO save handle state
-// TODO fix(?) error when offline but going back from details
-// TODO retry infinite when offline -> button try again
+
+
+//TODO test navigation

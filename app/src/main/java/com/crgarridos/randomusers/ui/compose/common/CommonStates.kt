@@ -20,13 +20,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.crgarridos.randomusers.ui.compose.common.CommonStateTestTags.TEST_TAG_ERROR_SCREEN
+import com.crgarridos.randomusers.ui.compose.common.CommonStateTestTags.TEST_TAG_FULL_SCREEN_LOADING
+import org.jetbrains.annotations.VisibleForTesting
 
+
+@VisibleForTesting
+internal object CommonStateTestTags {
+    const val TEST_TAG_FULL_SCREEN_LOADING = "FullScreenLoading"
+    const val TEST_TAG_ERROR_SCREEN = "ErrorScreen"
+}
 @Composable
 fun FullScreenLoading() {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize()
+            .testTag(TEST_TAG_FULL_SCREEN_LOADING),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator()
@@ -80,7 +91,8 @@ fun ErrorScreen(
     onRetry: (() -> Unit)? = null,
 ) {
     FullScreenStatusWithRetry(
-        modifier = modifier,
+        modifier = modifier
+            .testTag(TEST_TAG_ERROR_SCREEN),
         message = message,
         icon = icon,
         color = MaterialTheme.colorScheme.error,
