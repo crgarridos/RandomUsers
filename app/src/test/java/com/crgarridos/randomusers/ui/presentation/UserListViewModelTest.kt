@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
@@ -93,7 +92,7 @@ class UserListViewModelTest {
     }
 
     @Test
-    fun `loadMoreUsers - fetches next page and appends users on success`() = runTest {
+    fun `onLoadMoreUsersRequested - fetches next page and appends users on success`() = runTest {
         val page1Users = UserFixtures.generateRandomUsers(resultsPerPage)
         val page2Users = UserFixtures.generateRandomUsers(resultsPerPage)
 
@@ -113,7 +112,7 @@ class UserListViewModelTest {
 
             awaitItem() as UserListUiState.Success
 
-            viewModel.loadMoreUsers()
+            viewModel.onLoadMoreUsersRequested()
 
             val loadingMoreState = awaitItem() as UserListUiState.Success
             assertEquals(
@@ -136,7 +135,7 @@ class UserListViewModelTest {
     }
 
     @Test
-    fun `loadMoreUsers - fetches next page should indicate loading more before success`() = runTest {
+    fun `onLoadMoreUsersRequested - fetches next page should indicate loading more before success`() = runTest {
         val page1Users = UserFixtures.generateRandomUsers(resultsPerPage)
         val page2Users = UserFixtures.generateRandomUsers(resultsPerPage)
 
@@ -155,7 +154,7 @@ class UserListViewModelTest {
             assertIsLoadingMore(awaitItem())
             awaitItem() as UserListUiState.Success
 
-            viewModel.loadMoreUsers()
+            viewModel.onLoadMoreUsersRequested()
 
             val loadingMoreState = awaitItem() as UserListUiState.Success
             assertTrue(
@@ -174,7 +173,7 @@ class UserListViewModelTest {
     }
 
     @Test
-    fun `loadMoreUsers - handles empty next page correctly`() = runTest {
+    fun `onLoadMoreUsersRequested - handles empty next page correctly`() = runTest {
         val page1Users = UserFixtures.generateRandomUsers(resultsPerPage)
         val emptyPage2Users = emptyList<User>()
 
@@ -192,7 +191,7 @@ class UserListViewModelTest {
             assertIsLoadingMore(awaitItem())
             awaitItem() as UserListUiState.Success
 
-            viewModel.loadMoreUsers()
+            viewModel.onLoadMoreUsersRequested()
 
             awaitItem() as UserListUiState.Success // is loading
 
@@ -209,7 +208,7 @@ class UserListViewModelTest {
 
 
     @Test
-    fun `loadMoreUsers - does not fetch if cannot load more`() = runTest {
+    fun `onLoadMoreUsersRequested - does not fetch if cannot load more`() = runTest {
         val page1Users = UserFixtures.generateRandomUsers(resultsPerPage)
         val page2Users = UserFixtures.generateRandomUsers(resultsPerPage)
 
@@ -230,7 +229,7 @@ class UserListViewModelTest {
             assertIsLoadingMore(awaitItem())
             awaitItem() as UserListUiState.Success
 
-            viewModel.loadMoreUsers()
+            viewModel.onLoadMoreUsersRequested()
 
             awaitItem() as UserListUiState.Success // is loading
 
@@ -242,7 +241,7 @@ class UserListViewModelTest {
 
 
     @Test
-    fun `loadMoreUsers - handles error during fetch, keeps existing users`() = runTest {
+    fun `onLoadMoreUsersRequested - handles error during fetch, keeps existing users`() = runTest {
         val page1Users = UserFixtures.generateRandomUsers(resultsPerPage)
         val page2Error = NetworkError.ConnectivityError
 
@@ -261,7 +260,7 @@ class UserListViewModelTest {
             assertIsLoadingMore(awaitItem())
             awaitItem() as UserListUiState.Success
 
-            viewModel.loadMoreUsers()
+            viewModel.onLoadMoreUsersRequested()
 
             val loadingMoreState = awaitItem() as UserListUiState.Success
             assertTrue("isLoadingMore should be true", loadingMoreState.isLoadingMore)
