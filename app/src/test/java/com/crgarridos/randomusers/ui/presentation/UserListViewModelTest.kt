@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.crgarridos.randomusers.domain.model.PaginatedUserList
 import com.crgarridos.randomusers.domain.model.User
 import com.crgarridos.randomusers.domain.model.UserError
+import com.crgarridos.randomusers.domain.model.util.DomainError
 import com.crgarridos.randomusers.domain.model.util.DomainResult
 import com.crgarridos.randomusers.domain.model.util.DomainSuccess
 import com.crgarridos.randomusers.domain.model.util.NetworkError
@@ -12,6 +13,7 @@ import com.crgarridos.randomusers.domain.usecase.ObserveAllUsersUseCase
 import com.crgarridos.randomusers.test.util.rules.MainCoroutineRule
 import com.crgarridos.randomusers.test.utils.fixtures.UserFixtures
 import com.crgarridos.randomusers.ui.compose.userlist.UserListUiState
+import com.crgarridos.randomusers.ui.presentation.mapper.FakeDomainErrorToStringUiMapper
 import com.crgarridos.randomusers.ui.presentation.mapper.toUiUserList
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -75,7 +77,8 @@ class UserListViewModelTest {
 
         val viewModel = buildUserListViewModel(
             stubForObservedUsers = flowOf(emptyList()),
-            stuForFetchUsersPageUseCase = listOf(networkError)
+            stuForFetchUsersPageUseCase = listOf(networkError),
+            stubErrorToStringUiMapper = mapOf(networkError to "Network connection error from Unit tests")
         )
 
         viewModel.uiState.test {
@@ -85,7 +88,7 @@ class UserListViewModelTest {
             val errorState = awaitItem() as UserListUiState.Error
             assertTrue(
                 "Error message should reflect network error",
-                errorState.message.contains("Network connection error") /// TODO ???
+                errorState.message == "Network connection error from Unit tests"
             )
             expectNoEvents()
         }
@@ -287,6 +290,7 @@ class UserListViewModelTest {
     private fun buildUserListViewModel(
         stubForObservedUsers: Flow<List<User>>,
         stuForFetchUsersPageUseCase: List<DomainResult<UserError, PaginatedUserList>>,
+        stubErrorToStringUiMapper: Map<DomainError<*>, String> = emptyMap()
     ): UserListViewModel {
         val observeAllUsersUseCase = mockk<ObserveAllUsersUseCase>(relaxed = true) {
             coEvery { this@mockk.invoke() } returns stubForObservedUsers
@@ -302,7 +306,8 @@ class UserListViewModelTest {
                 }
             }
         }
-        return UserListViewModel(observeAllUsersUseCase, fetchUsersPageUseCase)
+        val errorToUiMessageMapper = FakeDomainErrorToStringUiMapper(stubErrorToStringUiMapper)
+        return UserListViewModel(observeAllUsersUseCase, fetchUsersPageUseCase, errorToUiMessageMapper)
     }
     private fun assertIsLoadingMore(state: UserListUiState) {
         val loadingMoreState = state as UserListUiState.Success

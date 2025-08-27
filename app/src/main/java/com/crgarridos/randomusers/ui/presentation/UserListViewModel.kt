@@ -8,11 +8,11 @@ import com.crgarridos.randomusers.domain.model.UserError
 import com.crgarridos.randomusers.domain.model.util.DomainError
 import com.crgarridos.randomusers.domain.model.util.DomainResult
 import com.crgarridos.randomusers.domain.model.util.DomainSuccess
-import com.crgarridos.randomusers.domain.model.util.NetworkError
 import com.crgarridos.randomusers.domain.usecase.FetchUsersPageUseCase
 import com.crgarridos.randomusers.domain.usecase.ObserveAllUsersUseCase
 import com.crgarridos.randomusers.ui.compose.userlist.UserListUiCallbacks
 import com.crgarridos.randomusers.ui.compose.userlist.UserListUiState
+import com.crgarridos.randomusers.ui.presentation.mapper.DomainErrorToStringUiMapper
 import com.crgarridos.randomusers.ui.presentation.mapper.toUiUserList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -34,6 +34,7 @@ private const val RESULTS_PER_PAGE = 20
 class UserListViewModel @Inject constructor(
     observeAllUsersUseCase: ObserveAllUsersUseCase,
     private val fetchUsersPageUseCase: FetchUsersPageUseCase,
+    private val errorToUiMessageMapper: DomainErrorToStringUiMapper,
 ) : ViewModel(), UserListUiCallbacks {
 
     private sealed class PaginationState(
@@ -179,11 +180,7 @@ class UserListViewModel @Inject constructor(
             }
 
             is DomainError -> {
-                val errorMessage = when (result) {
-                    is NetworkError.ConnectivityError -> "Network connection error. Please check your connection."// TODO Android resources (not here in the VM please)
-                    is NetworkError.ServerError -> "Server error. Please try again later."
-                    else -> "Failed to load users. Please try again."
-                }
+                val errorMessage = errorToUiMessageMapper.resolve(result)
                 paginationState.value = PaginationState.Error(
                     nextPageToLoad = requestedPage,
                     message = errorMessage,
