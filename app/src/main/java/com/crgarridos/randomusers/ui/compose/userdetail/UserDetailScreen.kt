@@ -36,11 +36,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.crgarridos.randomusers.R
+import com.crgarridos.randomusers.ui.compose.common.PreviewLightAndDarkTheme
 import com.crgarridos.randomusers.ui.compose.common.ErrorScreen
 import com.crgarridos.randomusers.ui.compose.common.FullScreenLoading
 import com.crgarridos.randomusers.ui.compose.model.UiUser
@@ -164,13 +164,13 @@ private fun DetailInfoRow(icon: ImageVector, label: String, value: String) {
 
 // Previews
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 private fun DetailInfoRowPreview() {
     DetailInfoRow(icon = Icons.Filled.Phone, label = "Phone", value = "06 64 64 64 64")
 }
 
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 private fun UserDetailScreenPreview_Successd() {
     RandomUsersTheme {
         UserDetailScreen(
@@ -180,7 +180,7 @@ private fun UserDetailScreenPreview_Successd() {
 }
 
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 private fun UserDetailScreenPreview_Loading() {
     RandomUsersTheme {
         UserDetailScreen(
@@ -190,7 +190,7 @@ private fun UserDetailScreenPreview_Loading() {
 }
 
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 private fun UserDetailScreenPreview_Error() {
     RandomUsersTheme {
         UserDetailScreen(

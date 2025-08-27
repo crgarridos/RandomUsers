@@ -27,7 +27,7 @@ private val LightColorScheme = lightColorScheme(
     onTertiary = DarkGray,
     onBackground = DarkGray,
     onSurface = DarkGray,
-    error = RedError,
+    error = RedErrorLightTheme,
     onError = White
 )
 
@@ -42,7 +42,7 @@ private val DarkColorScheme = darkColorScheme(
     onTertiary = LightGray,
     onBackground = White,
     onSurface = White,
-    error = RedError,
+    error = RedErrorDarkTheme,
     onError = White
 )
 

@@ -44,11 +44,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.crgarridos.randomusers.R
+import com.crgarridos.randomusers.ui.compose.common.PreviewLightAndDarkTheme
 import com.crgarridos.randomusers.ui.compose.common.ErrorScreen
 import com.crgarridos.randomusers.ui.compose.common.FullScreenLoading
 import com.crgarridos.randomusers.ui.compose.common.FullScreenStatusWithRetry
@@ -292,7 +292,7 @@ private fun EmptyScreen(modifier: Modifier, onRetry: () -> Unit) {
 }
 
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 fun UserListScreenPreview_Success() {
     RandomUsersTheme {
         UserListScreen(
@@ -306,7 +306,7 @@ fun UserListScreenPreview_Success() {
 }
 
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 private fun UserListScreenPreview_Loading() {
     RandomUsersTheme {
         UserListScreen(
@@ -316,7 +316,7 @@ private fun UserListScreenPreview_Loading() {
 }
 
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 private fun UserListScreenPreview_Error() {
     RandomUsersTheme {
         UserListScreen(
@@ -326,7 +326,7 @@ private fun UserListScreenPreview_Error() {
 }
 
 @Composable
-@Preview(showBackground = true)
+@PreviewLightAndDarkTheme
 private fun UserListItemPreview() {
     RandomUsersTheme {
         UserListItem(user = previewUserList.first(), onClick = {})
@@ -351,14 +351,3 @@ internal object EmptyUserListUiCallbacks : UserListUiCallbacks {
     override fun onRefresh() = Unit
     override fun onRetry() = Unit
 }
-
-/// TODO Preview dark mode
-/// TODO param tests
-/// TODO screenshot test + UI
-/// TODO interface for callbacks
-/// TODO Test UI for composables??
-/// TODO Test UI for states
-/// TODO skeletons loader ?
-
-
-//TODO test navigation
